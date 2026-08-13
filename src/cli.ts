@@ -6,6 +6,9 @@
  *   npm run sources     the source register and why each source is on or off
  *   npm run ingest:manual   run the Tier 0 pipeline from files on disk
  *   npm run scan [-- SYM --verbose]  score stored data, store every candidate
+ *   npm run replay -- --from 2026-01-01 --to 2026-06-30   point-in-time replay
+ *   npm run label       attach forward outcomes to every candidate
+ *   npm run validate    metrics + HTML report
  *   npm run feed:smoke -- 60   live Upstox connectivity test (needs a token)
  */
 
@@ -20,9 +23,13 @@ import { ingestAnnouncements } from './ingest/events.ts';
 import { loadUniverse } from './ingest/universe.ts';
 import { runFeedSmoke } from './jobs/feed-smoke.ts';
 import { printScan, runScan } from './jobs/scan.ts';
+import { runReplay } from './jobs/replay.ts';
+import { labelCandidates } from './validation/labeller.ts';
+import { buildReport } from './validation/metrics.ts';
+import { printReport, writeHtmlReport } from './validation/report.ts';
 import { CredentialError } from './adapters/tier1/upstox/credentials.ts';
 import { InstrumentResolutionError } from './adapters/tier1/upstox/instruments.ts';
-import { DATA_DIR, dbPath, SOURCES_CONFIG } from './paths.ts';
+import { DATA_DIR, REPORTS_DIR, dbPath, SOURCES_CONFIG } from './paths.ts';
 
 function loadRegistry(): SourceRegistry {
   return SourceRegistry.fromFile(SOURCES_CONFIG);
@@ -174,6 +181,69 @@ const COMMANDS: Record<string, () => void | Promise<void>> = {
       db.close();
     }
   },
+  replay: () => {
+    const args = process.argv.slice(3);
+    const flag = (name: string): string | undefined => {
+      const i = args.indexOf(`--${name}`);
+      return i >= 0 ? args[i + 1] : undefined;
+    };
+    const from = flag('from');
+    const to = flag('to');
+    if (!from || !to) {
+      console.error('Usage: cli.ts replay --from YYYY-MM-DD --to YYYY-MM-DD [--events-only]');
+      process.exitCode = 1;
+      return;
+    }
+    const db = openDb({ path: dbPath() });
+    try {
+      migrate(db);
+      const result = runReplay(db, {
+        from, to,
+        eventDrivenOnly: args.includes('--events-only'),
+        minHistoryBars: Number(flag('min-history') ?? 50),
+      });
+      console.log(
+        `Replayed ${result.datesEvaluated} date(s), ${result.decisionsMade} decision(s)`,
+      );
+      for (const [action, count] of Object.entries(result.byAction)) {
+        console.log(`  ${action.padEnd(10)} ${count}`);
+      }
+    } finally {
+      db.close();
+    }
+  },
+
+  label: () => {
+    const db = openDb({ path: dbPath() });
+    try {
+      migrate(db);
+      const stats = labelCandidates(db, { force: process.argv.includes('--force') });
+      console.log(
+        `Considered ${stats.candidatesConsidered}, labelled ${stats.labelled}, ` +
+          `simulated ${stats.tradesSimulated} trade(s), ` +
+          `${stats.skippedNoForwardData} awaiting forward data`,
+      );
+    } finally {
+      db.close();
+    }
+  },
+
+  validate: () => {
+    const db = openDb({ path: dbPath() });
+    try {
+      migrate(db);
+      const horizonIndex = process.argv.indexOf('--horizon');
+      const horizon = horizonIndex >= 0 ? process.argv[horizonIndex + 1] ?? '5d' : '5d';
+      const report = buildReport(db, horizon);
+      printReport(report, horizon);
+      const path = `${REPORTS_DIR}/validation.html`;
+      writeHtmlReport(report, path);
+      console.log(`HTML report written to ${path}`);
+    } finally {
+      db.close();
+    }
+  },
+
   'feed:smoke': async () => {
     const seconds = Number(process.argv[3] ?? 60);
     if (!Number.isFinite(seconds) || seconds <= 0) {
