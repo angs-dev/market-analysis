@@ -1,0 +1,21 @@
+{
+  "name": "swing10",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Event-driven Indian equity swing scanner — paper trading only",
+  "type": "module",
+  "engines": {
+    "node": ">=22.6.0"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "node --experimental-strip-types --no-warnings=ExperimentalWarning --test \"tests/**/*.test.ts\"",
+    "db:init": "node --experimental-strip-types --no-warnings=ExperimentalWarning src/cli.ts db:init",
+    "db:status": "node --experimental-strip-types --no-warnings=ExperimentalWarning src/cli.ts db:status",
+    "sources": "node --experimental-strip-types --no-warnings=ExperimentalWarning src/cli.ts sources"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.0"
+  }
+}

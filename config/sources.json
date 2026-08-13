@@ -1,0 +1,131 @@
+{
+  "_comment": [
+    "Source register. Mirrors docs/DATA-SOURCE-COMPLIANCE.md, which is the authority.",
+    "Anything with legalBasis TOS_GREY is disabled until its id is listed in optIn",
+    "below. Read the compliance doc before adding one — NSE's terms prohibit both",
+    "automated collection and use of its data for simulation."
+  ],
+
+  "optIn": [],
+
+  "sources": [
+    {
+      "id": "manual_csv",
+      "tier": 0,
+      "latencyClass": "PERIODIC",
+      "legalBasis": "MANUAL_HUMAN",
+      "enabledByDefault": true,
+      "poll": {
+        "intervalMs": 300000,
+        "minIntervalMsFloor": 60000,
+        "marketHoursOnly": false,
+        "tradingDaysOnly": false
+      },
+      "rateLimit": { "maxPerMinute": 600, "maxPerHour": 36000, "minGapMs": 0, "maxConcurrent": 4 },
+      "cache": { "ttlMs": 0, "persistRaw": false }
+    },
+
+    {
+      "id": "rss_news",
+      "tier": 0,
+      "latencyClass": "PERIODIC",
+      "legalBasis": "RSS_SYNDICATION",
+      "enabledByDefault": true,
+      "poll": {
+        "intervalMs": 300000,
+        "jitterPct": 0.2,
+        "minIntervalMsFloor": 120000,
+        "marketHoursOnly": false,
+        "tradingDaysOnly": false
+      },
+      "rateLimit": { "maxPerMinute": 6, "maxPerHour": 120, "minGapMs": 5000, "maxConcurrent": 2 }
+    },
+
+    {
+      "id": "bse_announcements",
+      "tier": 0,
+      "latencyClass": "PERIODIC",
+      "legalBasis": "TOS_GREY",
+      "enabledByDefault": false,
+      "attribution": "Source: BSE Ltd. (www.bseindia.com)",
+      "poll": {
+        "intervalMs": 60000,
+        "jitterPct": 0.2,
+        "minIntervalMsFloor": 30000,
+        "marketHoursOnly": true,
+        "tradingDaysOnly": true
+      },
+      "rateLimit": { "maxPerMinute": 10, "maxPerHour": 300, "minGapMs": 3000, "maxConcurrent": 1 },
+      "cache": { "ttlMs": 45000, "persistRaw": true }
+    },
+
+    {
+      "id": "bse_xbrl",
+      "tier": 0,
+      "latencyClass": "PERIODIC",
+      "legalBasis": "TOS_GREY",
+      "enabledByDefault": false,
+      "attribution": "Source: BSE Ltd. (www.bseindia.com)",
+      "poll": {
+        "intervalMs": 300000,
+        "minIntervalMsFloor": 120000,
+        "marketHoursOnly": false,
+        "tradingDaysOnly": true
+      },
+      "rateLimit": { "maxPerMinute": 5, "maxPerHour": 120, "minGapMs": 6000, "maxConcurrent": 1 },
+      "cache": { "ttlMs": 86400000, "persistRaw": true }
+    },
+
+    {
+      "id": "nse_archive",
+      "tier": 0,
+      "latencyClass": "PERIODIC",
+      "legalBasis": "TOS_GREY",
+      "enabledByDefault": false,
+      "poll": {
+        "intervalMs": 3600000,
+        "minIntervalMsFloor": 600000,
+        "marketHoursOnly": false,
+        "tradingDaysOnly": true
+      },
+      "rateLimit": { "maxPerMinute": 2, "maxPerHour": 30, "minGapMs": 20000, "maxConcurrent": 1 },
+      "cache": { "ttlMs": 86400000, "persistRaw": true }
+    },
+
+    {
+      "id": "broker_rest",
+      "tier": 1,
+      "latencyClass": "PERIODIC",
+      "legalBasis": "BROKER_LICENSED",
+      "enabledByDefault": false,
+      "poll": { "intervalMs": 60000, "minIntervalMsFloor": 1000 },
+      "rateLimit": { "maxPerMinute": 60, "maxPerHour": 3000, "minGapMs": 200, "maxConcurrent": 3 }
+    },
+
+    {
+      "id": "broker_ws",
+      "tier": 1,
+      "latencyClass": "REALTIME",
+      "legalBasis": "BROKER_LICENSED",
+      "enabledByDefault": false,
+      "poll": { "intervalMs": 1000, "minIntervalMsFloor": 1000 },
+      "rateLimit": { "maxPerMinute": 30, "maxPerHour": 600, "minGapMs": 500, "maxConcurrent": 1 }
+    },
+
+    {
+      "id": "yahoo_intraday",
+      "tier": 2,
+      "latencyClass": "DELAYED",
+      "legalBasis": "TOS_GREY",
+      "enabledByDefault": false,
+      "poll": {
+        "intervalMs": 900000,
+        "minIntervalMsFloor": 300000,
+        "marketHoursOnly": false,
+        "tradingDaysOnly": true
+      },
+      "rateLimit": { "maxPerMinute": 4, "maxPerHour": 60, "minGapMs": 15000, "maxConcurrent": 1 },
+      "cache": { "ttlMs": 900000, "persistRaw": true }
+    }
+  ]
+}
