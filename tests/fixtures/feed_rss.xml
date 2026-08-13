@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Synthetic fixture. Structure mirrors a real RSS 2.0 business feed;
+     all content is invented for testing. No real market data here. -->
+<rss version="2.0">
+  <channel>
+    <title>Test Business Feed</title>
+    <link>https://example.invalid/feed</link>
+    <description>Fixture feed</description>
+    <item>
+      <title>Astral Limited reports Q1 revenue growth of 16%</title>
+      <link>https://example.invalid/news/1</link>
+      <description><![CDATA[The company said revenue rose 16% & PAT climbed 48% <b>year on year</b>.]]></description>
+      <pubDate>Thu, 13 Aug 2026 11:03:00 +0530</pubDate>
+      <guid isPermaLink="false">news-0001</guid>
+    </item>
+    <item>
+      <title>TESTCO wins large order worth Rs 450 crore</title>
+      <link>https://example.invalid/news/2</link>
+      <description>Order to be executed over 18 months.</description>
+      <pubDate>Thu, 13 Aug 2026 09:45:00 +0530</pubDate>
+      <guid isPermaLink="false">news-0002</guid>
+    </item>
+    <item>
+      <title>Broad market rallies on global cues</title>
+      <link>https://example.invalid/news/3</link>
+      <description>No single company named in this headline.</description>
+      <pubDate>Thu, 13 Aug 2026 10:15:00 +0530</pubDate>
+      <guid isPermaLink="false">news-0003</guid>
+    </item>
+  </channel>
+</rss>

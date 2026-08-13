@@ -12,7 +12,8 @@
     "test": "node --experimental-strip-types --no-warnings=ExperimentalWarning --test \"tests/**/*.test.ts\"",
     "db:init": "node --experimental-strip-types --no-warnings=ExperimentalWarning src/cli.ts db:init",
     "db:status": "node --experimental-strip-types --no-warnings=ExperimentalWarning src/cli.ts db:status",
-    "sources": "node --experimental-strip-types --no-warnings=ExperimentalWarning src/cli.ts sources"
+    "sources": "node --experimental-strip-types --no-warnings=ExperimentalWarning src/cli.ts sources",
+    "ingest:manual": "node --experimental-strip-types --no-warnings=ExperimentalWarning src/cli.ts ingest:manual"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

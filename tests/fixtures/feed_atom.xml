@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Synthetic Atom fixture. Invented content, for parser testing only. -->
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>Test Atom Feed</title>
+  <updated>2026-08-13T06:00:00Z</updated>
+  <entry>
+    <title>TESTCO announces capacity expansion at Gujarat plant</title>
+    <link rel="alternate" href="https://example.invalid/atom/1"/>
+    <id>urn:uuid:atom-0001</id>
+    <published>2026-08-13T05:30:00Z</published>
+    <updated>2026-08-13T05:35:00Z</updated>
+    <summary>Board approved a brownfield expansion.</summary>
+  </entry>
+  <entry>
+    <title>Second Test Co board approves buyback</title>
+    <link rel="alternate" href="https://example.invalid/atom/2"/>
+    <id>urn:uuid:atom-0002</id>
+    <published>2026-08-13T04:00:00Z</published>
+    <summary>Buyback via open market route.</summary>
+  </entry>
+</feed>

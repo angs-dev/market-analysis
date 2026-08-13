@@ -158,6 +158,51 @@ Milestone 1 is **Tier 0 only** and does not depend on this decision.
 
 ---
 
+## 5a. Upstox — Analytics Token and Market Data Feed V3 (Milestone 2 target)
+
+Investigated ahead of Milestone 2. The **Analytics Token** is a materially better
+fit for this project than a standard trading token.
+
+| Property | Finding | Status |
+|---|---|---|
+| Access scope | **Read-only.** Cannot place, modify, or cancel orders — write operations are not available with this token at all | ✅ Verified |
+| Validity | Long-lived, **1 year**; no daily OAuth login and no authorization redirect | ✅ Verified |
+| Generation | Directly from the Developer Apps page | ✅ Verified |
+| Market data APIs | Market Quote, Historical Data, Option Chain, Market Information, Fundamentals, News, IPO and **WebSocket** work **without Static IP** | ✅ Verified |
+| Portfolio / Accounts / Funds | Also supported, but **require Static IP**. **This project will not use them** — the provider seam has no place to put them | ✅ Verified |
+| Feed | Market Data Feed **V3**; V2 deprecated | ✅ Verified |
+| Wire format | **Protobuf** binary, using Upstox's `.proto`; subscription requests must be sent as **binary** frames, not text | ✅ Verified |
+| Connection | `wss:`, and the client must follow the redirect to the authorized endpoint after auth | ✅ Verified |
+| Subscription limit | Category-dependent; **up to 5,000 instrument keys for `LTPC`** on a single-category subscription. Nifty 500 fits comfortably | ✅ Verified |
+| Historical depth | Minute/hour from **Jan 2022**; daily/weekly/monthly from **Jan 2000** | ✅ Verified |
+| Cost | Upstox API access is documented as free of subscription fee; **confirm no API subscription charge applies to the Analytics Token before relying on it** | ⚠️ Verify |
+
+**Why this token and not a trading token:** it removes order placement as a
+*capability*, not merely as a coding convention. Combined with the
+`MarketDataProvider` seam — which exposes no order, position, or funds method,
+asserted by test — there are then two independent barriers between this system
+and a live order.
+
+### Design implication found: the 403 rule needs a per-source exception
+
+The governor treats HTTP 403 as a stop instruction that hard-stops a source for
+the session. That is correct for a public endpoint refusing automated access.
+It is **wrong for an authenticated broker API**, where 403 (and 401) normally
+mean *the token expired*, not *go away* — and Upstox's community forum shows
+403s arising from WebSocket authorization handling specifically.
+
+Because policy is per-source, this needs no change to the governor. The broker
+source will be configured with:
+
+- `circuitBreaker.hardStopOn: []` — a broker 403 must not hard-stop the session
+- 401/403 handled by the adapter as a re-authentication trigger, with a bounded
+  number of refresh attempts before the circuit opens normally
+
+The Tier 0 public sources keep `hardStopOn: [403]` unchanged. Milestone 2 must
+add a test asserting both behaviours, so the two never get conflated.
+
+---
+
 ## 6. Local verification checklist
 
 The development sandbox blocks `nseindia.com`, `zerodha.com`, `upstox.com`,

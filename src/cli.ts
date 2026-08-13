@@ -6,11 +6,16 @@
  *   npm run sources     the source register and why each source is on or off
  */
 
+import { join } from 'node:path';
 import { openDb } from './db/driver.ts';
 import { currentVersion, migrate } from './db/migrate.ts';
 import { SourceRegistry } from './sources/registry.ts';
 import { describeCapabilities, resolveCapabilities } from './sources/capabilities.ts';
-import { dbPath, SOURCES_CONFIG } from './paths.ts';
+import { ManualCsvProvider } from './adapters/tier0/manual-csv.ts';
+import { ingestCandles } from './ingest/candles.ts';
+import { ingestAnnouncements } from './ingest/events.ts';
+import { loadUniverse } from './ingest/universe.ts';
+import { DATA_DIR, dbPath, SOURCES_CONFIG } from './paths.ts';
 
 function loadRegistry(): SourceRegistry {
   return SourceRegistry.fromFile(SOURCES_CONFIG);
@@ -89,10 +94,67 @@ function cmdSources(): void {
   }
 }
 
-const COMMANDS: Record<string, () => void> = {
+/** Runs the whole Tier 0 pipeline from files on disk. No network at all. */
+async function cmdIngestManual(): Promise<void> {
+  const dir = join(DATA_DIR, 'manual');
+  const provider = new ManualCsvProvider({ dir });
+
+  if (!(await provider.isAvailable())) {
+    console.error(`No manual data directory at ${dir}`);
+    process.exitCode = 1;
+    return;
+  }
+
+  const db = openDb({ path: dbPath() });
+  try {
+    migrate(db);
+
+    const candlesBySymbol = provider.loadAllCandles();
+    const allCandles = [...candlesBySymbol.values()].flat();
+    const candleStats = ingestCandles(db, allCandles);
+    console.log(
+      `Candles: ${candleStats.inserted} inserted, ${candleStats.upgraded} upgraded, ` +
+        `${candleStats.skipped} unchanged (${candlesBySymbol.size} symbol(s))`,
+    );
+
+    let instruments = await provider.listInstruments();
+    if (instruments.length === 0) {
+      // Fall back to whatever the candle files cover.
+      instruments = [...candlesBySymbol.keys()].map((symbol) => ({ symbol }));
+    }
+    const universe = loadUniverse(db, { instruments, candlesBySymbol, inNifty500: true });
+    console.log(
+      `Universe: ${universe.total} total, ${universe.tradeable} tradeable, ` +
+        `${universe.excluded} excluded`,
+    );
+    for (const [reason, count] of Object.entries(universe.byReason)) {
+      console.log(`  excluded (${reason}): ${count}`);
+    }
+
+    const events = provider.loadEvents();
+    if (events.length > 0) {
+      const eventStats = ingestAnnouncements(db, events);
+      console.log(
+        `Events: ${eventStats.inserted} inserted, ${eventStats.upgraded} upgraded, ` +
+          `${eventStats.duplicates} duplicate`,
+      );
+    } else {
+      console.log('Events: none found');
+    }
+
+    const caps = resolveCapabilities(SourceRegistry.fromFile(SOURCES_CONFIG));
+    console.log(`\n${describeCapabilities(caps)}`);
+    for (const d of caps.degradations) console.log(`  ! ${d}`);
+  } finally {
+    db.close();
+  }
+}
+
+const COMMANDS: Record<string, () => void | Promise<void>> = {
   'db:init': cmdDbInit,
   'db:status': cmdDbStatus,
   sources: cmdSources,
+  'ingest:manual': cmdIngestManual,
 };
 
 const command = process.argv[2];
@@ -104,4 +166,4 @@ if (!run) {
   process.exit(1);
 }
 
-run();
+await run();
