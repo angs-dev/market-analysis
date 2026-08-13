@@ -5,6 +5,7 @@
  *   npm run db:status   schema version, row counts, resolved capabilities
  *   npm run sources     the source register and why each source is on or off
  *   npm run ingest:manual   run the Tier 0 pipeline from files on disk
+ *   npm run scan [-- SYM --verbose]  score stored data, store every candidate
  *   npm run feed:smoke -- 60   live Upstox connectivity test (needs a token)
  */
 
@@ -18,6 +19,7 @@ import { ingestCandles } from './ingest/candles.ts';
 import { ingestAnnouncements } from './ingest/events.ts';
 import { loadUniverse } from './ingest/universe.ts';
 import { runFeedSmoke } from './jobs/feed-smoke.ts';
+import { printScan, runScan } from './jobs/scan.ts';
 import { CredentialError } from './adapters/tier1/upstox/credentials.ts';
 import { InstrumentResolutionError } from './adapters/tier1/upstox/instruments.ts';
 import { DATA_DIR, dbPath, SOURCES_CONFIG } from './paths.ts';
@@ -160,6 +162,18 @@ const COMMANDS: Record<string, () => void | Promise<void>> = {
   'db:status': cmdDbStatus,
   sources: cmdSources,
   'ingest:manual': cmdIngestManual,
+  scan: () => {
+    const db = openDb({ path: dbPath() });
+    try {
+      migrate(db);
+      const verbose = process.argv.includes('--verbose');
+      const symbols = process.argv.slice(3).filter((a) => !a.startsWith('--'));
+      const result = runScan(db, { symbols, verbose });
+      printScan(db, result, verbose);
+    } finally {
+      db.close();
+    }
+  },
   'feed:smoke': async () => {
     const seconds = Number(process.argv[3] ?? 60);
     if (!Number.isFinite(seconds) || seconds <= 0) {
