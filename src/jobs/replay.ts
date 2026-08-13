@@ -18,6 +18,7 @@ import type { Db } from '../db/driver.ts';
 import { readCandles } from '../ingest/candles.ts';
 import { saveCandidate } from '../ingest/candidates.ts';
 import { buildFeatures } from '../scoring/build-features.ts';
+import { latestFundamentals, toFeatureFundamentals } from '../ingest/fundamentals.ts';
 import { decide, type Decision, type DecideConfig } from '../scoring/decide.ts';
 import { assessRegime } from '../regime/market.ts';
 import type { Candle } from '../market/types.ts';
@@ -175,7 +176,8 @@ export function runReplay(db: Db, opts: ReplayOptions): ReplayResult {
               corroborationCount: null,
             }
           : undefined,
-        regime,
+        fundamental: toFeatureFundamentals(latestFundamentals(db, symbol, asOf)),
+      regime,
         liquidity: instrument
           ? {
               avgTurnover20d: instrument.avg_turnover_20d,

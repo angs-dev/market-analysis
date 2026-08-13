@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Synthetic XBRL fixture. Invented figures, for testing only.
+
+  Story: the SAME headline PAT growth as results_operating.xbrl (1000 -> 1481),
+  but produced almost entirely by an exceptional gain. Revenue and EBITDA are
+  flat. A system that reads only the headline number cannot tell these two
+  filings apart; that is exactly what the earnings-quality classifier is for.
+-->
+<xbrli:xbrl xmlns:xbrli="http://www.xbrl.org/2003/instance"
+            xmlns:in-bse-fin="http://www.bseindia.com/xbrl/fin">
+
+  <xbrli:context id="Q_CURRENT">
+    <xbrli:entity><xbrli:identifier scheme="isin">INE000A01002</xbrli:identifier></xbrli:entity>
+    <xbrli:period>
+      <xbrli:startDate>2026-04-01</xbrli:startDate>
+      <xbrli:endDate>2026-06-30</xbrli:endDate>
+    </xbrli:period>
+  </xbrli:context>
+
+  <xbrli:context id="Q_YEAR_AGO">
+    <xbrli:entity><xbrli:identifier scheme="isin">INE000A01002</xbrli:identifier></xbrli:entity>
+    <xbrli:period>
+      <xbrli:startDate>2025-04-01</xbrli:startDate>
+      <xbrli:endDate>2025-06-30</xbrli:endDate>
+    </xbrli:period>
+  </xbrli:context>
+
+  <!-- Current quarter: flat operations, large exceptional gain -->
+  <in-bse-fin:RevenueFromOperations contextRef="Q_CURRENT" unitRef="INR">10100</in-bse-fin:RevenueFromOperations>
+  <in-bse-fin:OtherIncome contextRef="Q_CURRENT" unitRef="INR">115</in-bse-fin:OtherIncome>
+  <in-bse-fin:FinanceCosts contextRef="Q_CURRENT" unitRef="INR">200</in-bse-fin:FinanceCosts>
+  <in-bse-fin:DepreciationDepletionAndAmortisationExpense contextRef="Q_CURRENT" unitRef="INR">405</in-bse-fin:DepreciationDepletionAndAmortisationExpense>
+  <in-bse-fin:ProfitBeforeExceptionalItemsAndTax contextRef="Q_CURRENT" unitRef="INR">1350</in-bse-fin:ProfitBeforeExceptionalItemsAndTax>
+  <in-bse-fin:ExceptionalItemsBeforeTax contextRef="Q_CURRENT" unitRef="INR">630</in-bse-fin:ExceptionalItemsBeforeTax>
+  <in-bse-fin:ProfitBeforeTax contextRef="Q_CURRENT" unitRef="INR">1980</in-bse-fin:ProfitBeforeTax>
+  <in-bse-fin:TaxExpense contextRef="Q_CURRENT" unitRef="INR">499</in-bse-fin:TaxExpense>
+  <in-bse-fin:ProfitLossForPeriod contextRef="Q_CURRENT" unitRef="INR">1481</in-bse-fin:ProfitLossForPeriod>
+
+  <!-- Year-ago quarter -->
+  <in-bse-fin:RevenueFromOperations contextRef="Q_YEAR_AGO" unitRef="INR">10000</in-bse-fin:RevenueFromOperations>
+  <in-bse-fin:OtherIncome contextRef="Q_YEAR_AGO" unitRef="INR">110</in-bse-fin:OtherIncome>
+  <in-bse-fin:FinanceCosts contextRef="Q_YEAR_AGO" unitRef="INR">200</in-bse-fin:FinanceCosts>
+  <in-bse-fin:DepreciationDepletionAndAmortisationExpense contextRef="Q_YEAR_AGO" unitRef="INR">400</in-bse-fin:DepreciationDepletionAndAmortisationExpense>
+  <in-bse-fin:ProfitBeforeExceptionalItemsAndTax contextRef="Q_YEAR_AGO" unitRef="INR">1337</in-bse-fin:ProfitBeforeExceptionalItemsAndTax>
+  <in-bse-fin:ExceptionalItemsBeforeTax contextRef="Q_YEAR_AGO" unitRef="INR">0</in-bse-fin:ExceptionalItemsBeforeTax>
+  <in-bse-fin:ProfitBeforeTax contextRef="Q_YEAR_AGO" unitRef="INR">1337</in-bse-fin:ProfitBeforeTax>
+  <in-bse-fin:TaxExpense contextRef="Q_YEAR_AGO" unitRef="INR">337</in-bse-fin:TaxExpense>
+  <in-bse-fin:ProfitLossForPeriod contextRef="Q_YEAR_AGO" unitRef="INR">1000</in-bse-fin:ProfitLossForPeriod>
+
+</xbrli:xbrl>

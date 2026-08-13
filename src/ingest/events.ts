@@ -8,6 +8,7 @@
  */
 
 import type { Db } from '../db/driver.ts';
+import { assessMateriality, classifyEvent } from '../events/classifier.ts';
 import type { RawAnnouncement } from '../market/types.ts';
 
 export interface EventIngestStats {
@@ -91,6 +92,10 @@ export function ingestAnnouncements(
         }
       }
 
+      // Classify at ingest so the type, sentiment and materiality are stored
+      // with the event rather than recomputed differently at each read.
+      const classification = classifyEvent(a.headline, a.body);
+
       const lagSec =
         a.filedAt !== null
           ? Math.round(
@@ -101,18 +106,29 @@ export function ingestAnnouncements(
       db.run(
         `INSERT INTO events
            (symbol, exchange, filed_at, detected_at, detection_lag_sec,
-            headline, attachment_url, source_id, source_tier, dedupe_key)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            event_type, headline, attachment_url, source_id, source_tier,
+            materiality, sentiment, dedupe_key, raw_path)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         a.symbol,
         a.exchange,
         a.filedAt,
         a.detectedAt,
         lagSec,
+        classification.eventType,
         a.headline,
         a.attachmentUrl ?? a.url ?? null,
         a.sourceId,
         a.sourceTier,
+        assessMateriality(classification),
+        classification.sentiment,
         a.dedupeKey,
+        JSON.stringify({
+          classification: {
+            confidence: classification.confidence,
+            evidence: classification.evidence,
+            routine: classification.routine,
+          },
+        }),
       );
       stats.inserted++;
     }

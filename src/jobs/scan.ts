@@ -13,6 +13,7 @@ import type { Db } from '../db/driver.ts';
 import { readCandles } from '../ingest/candles.ts';
 import { saveCandidate, summariseCandidates, gateHitCounts } from '../ingest/candidates.ts';
 import { buildFeatures } from '../scoring/build-features.ts';
+import { latestFundamentals, toFeatureFundamentals } from '../ingest/fundamentals.ts';
 import { decide, type Decision, type DecideConfig } from '../scoring/decide.ts';
 import { renderExplanations } from '../scoring/explain.ts';
 import { assessRegime } from '../regime/market.ts';
@@ -109,6 +110,7 @@ export function runScan(db: Db, opts: ScanOptions = {}): ScanResult {
             corroborationCount: null,
           }
         : undefined,
+      fundamental: toFeatureFundamentals(latestFundamentals(db, instrument.symbol)),
       regime,
       liquidity: {
         avgTurnover20d: instrument.avg_turnover_20d,
