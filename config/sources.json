@@ -93,23 +93,35 @@
     },
 
     {
-      "id": "broker_rest",
+      "_comment": [
+        "Upstox REST (historical candles), read-only Analytics Token.",
+        "circuitBreaker.hardStopOn is EMPTY on purpose. For a public endpoint a",
+        "403 means 'stop scraping' and must hard-stop the source. For an",
+        "authenticated broker API a 401/403 means the token expired, and",
+        "hard-stopping would take the feed down for the whole session on a",
+        "routine credential renewal. The adapter re-authenticates instead."
+      ],
+      "id": "upstox_rest",
       "tier": 1,
       "latencyClass": "PERIODIC",
       "legalBasis": "BROKER_LICENSED",
       "enabledByDefault": false,
       "poll": { "intervalMs": 60000, "minIntervalMsFloor": 1000 },
-      "rateLimit": { "maxPerMinute": 60, "maxPerHour": 3000, "minGapMs": 200, "maxConcurrent": 3 }
+      "rateLimit": { "maxPerMinute": 60, "maxPerHour": 3000, "minGapMs": 200, "maxConcurrent": 3 },
+      "backoff": { "maxRetries": 3, "baseMs": 1000, "on": [429, 500, 502, 503, 504] },
+      "circuitBreaker": { "hardStopOn": [], "hardStopThreshold": 1, "failureThreshold": 8 }
     },
 
     {
-      "id": "broker_ws",
+      "id": "upstox_feed_v3",
       "tier": 1,
       "latencyClass": "REALTIME",
       "legalBasis": "BROKER_LICENSED",
       "enabledByDefault": false,
       "poll": { "intervalMs": 1000, "minIntervalMsFloor": 1000 },
-      "rateLimit": { "maxPerMinute": 30, "maxPerHour": 600, "minGapMs": 500, "maxConcurrent": 1 }
+      "rateLimit": { "maxPerMinute": 30, "maxPerHour": 600, "minGapMs": 500, "maxConcurrent": 1 },
+      "backoff": { "maxRetries": 5, "baseMs": 1000, "on": [429, 500, 502, 503, 504] },
+      "circuitBreaker": { "hardStopOn": [], "hardStopThreshold": 1, "failureThreshold": 10 }
     },
 
     {

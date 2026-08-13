@@ -13,7 +13,8 @@
     "db:init": "node --experimental-strip-types --no-warnings=ExperimentalWarning src/cli.ts db:init",
     "db:status": "node --experimental-strip-types --no-warnings=ExperimentalWarning src/cli.ts db:status",
     "sources": "node --experimental-strip-types --no-warnings=ExperimentalWarning src/cli.ts sources",
-    "ingest:manual": "node --experimental-strip-types --no-warnings=ExperimentalWarning src/cli.ts ingest:manual"
+    "ingest:manual": "node --experimental-strip-types --no-warnings=ExperimentalWarning src/cli.ts ingest:manual",
+    "feed:smoke": "node --experimental-strip-types --no-warnings=ExperimentalWarning src/cli.ts feed:smoke"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

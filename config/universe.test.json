@@ -1,0 +1,45 @@
+{
+  "_comment": [
+    "Small test universe for Milestone 2 (requirements 18 and 19).",
+    "Listed by TRADING SYMBOL, not by Upstox instrument key: equity keys embed",
+    "ISINs and are resolved at runtime from the Upstox instrument master, so",
+    "that a mistyped ISIN cannot silently subscribe to the wrong company.",
+    "",
+    "Download the instrument master to data/manual/upstox_instruments.json",
+    "before running the live feed. Verify index key spellings against it too.",
+    "",
+    "These 20 equities are large, liquid NSE names chosen for a connectivity",
+    "test. They are NOT a recommendation, a screen result, or a signal.",
+    "",
+    "mode: 'full' gives OHLC and cumulative volume, which the 1-minute candle",
+    "builder needs. 'ltpc' is lighter but carries no cumulative volume, so",
+    "candle volume would be null."
+  ],
+
+  "mode": "full",
+
+  "indices": ["NIFTY_50", "NIFTY_BANK", "INDIA_VIX"],
+
+  "equities": [
+    "RELIANCE",
+    "HDFCBANK",
+    "ICICIBANK",
+    "INFY",
+    "TCS",
+    "ITC",
+    "LT",
+    "AXISBANK",
+    "SBIN",
+    "BHARTIARTL",
+    "KOTAKBANK",
+    "HINDUNILVR",
+    "BAJFINANCE",
+    "MARUTI",
+    "TATAMOTORS",
+    "SUNPHARMA",
+    "TITAN",
+    "ULTRACEMCO",
+    "ASIANPAINT",
+    "TATASTEEL"
+  ]
+}

@@ -4,6 +4,8 @@
  *   npm run db:init     apply migrations, mirror the source register
  *   npm run db:status   schema version, row counts, resolved capabilities
  *   npm run sources     the source register and why each source is on or off
+ *   npm run ingest:manual   run the Tier 0 pipeline from files on disk
+ *   npm run feed:smoke -- 60   live Upstox connectivity test (needs a token)
  */
 
 import { join } from 'node:path';
@@ -15,6 +17,9 @@ import { ManualCsvProvider } from './adapters/tier0/manual-csv.ts';
 import { ingestCandles } from './ingest/candles.ts';
 import { ingestAnnouncements } from './ingest/events.ts';
 import { loadUniverse } from './ingest/universe.ts';
+import { runFeedSmoke } from './jobs/feed-smoke.ts';
+import { CredentialError } from './adapters/tier1/upstox/credentials.ts';
+import { InstrumentResolutionError } from './adapters/tier1/upstox/instruments.ts';
 import { DATA_DIR, dbPath, SOURCES_CONFIG } from './paths.ts';
 
 function loadRegistry(): SourceRegistry {
@@ -155,6 +160,15 @@ const COMMANDS: Record<string, () => void | Promise<void>> = {
   'db:status': cmdDbStatus,
   sources: cmdSources,
   'ingest:manual': cmdIngestManual,
+  'feed:smoke': async () => {
+    const seconds = Number(process.argv[3] ?? 60);
+    if (!Number.isFinite(seconds) || seconds <= 0) {
+      console.error('Usage: cli.ts feed:smoke [seconds]');
+      process.exitCode = 1;
+      return;
+    }
+    await runFeedSmoke(seconds);
+  },
 };
 
 const command = process.argv[2];
@@ -166,4 +180,14 @@ if (!run) {
   process.exit(1);
 }
 
-await run();
+// A misconfiguration should read as an instruction, not a stack trace. Only
+// genuinely unexpected errors keep their stack.
+try {
+  await run();
+} catch (err) {
+  if (err instanceof CredentialError || err instanceof InstrumentResolutionError) {
+    console.error(`\n${err.message}\n`);
+    process.exit(1);
+  }
+  throw err;
+}
