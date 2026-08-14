@@ -9,6 +9,8 @@
  *   npm run replay -- --from 2026-01-01 --to 2026-06-30   point-in-time replay
  *   npm run label       attach forward outcomes to every candidate
  *   npm run validate    metrics + HTML report
+ *   npm run scan:once   one complete ScanEngine cycle, then exit
+ *   npm run scanner:start   continuous local scanner during market hours
  *   npm run feed:smoke -- 60   live Upstox connectivity test (needs a token)
  */
 
@@ -23,6 +25,11 @@ import { ingestAnnouncements } from './ingest/events.ts';
 import { loadUniverse } from './ingest/universe.ts';
 import { runFeedSmoke } from './jobs/feed-smoke.ts';
 import { printScan, runScan } from './jobs/scan.ts';
+import { scanOnce, startScanner } from './jobs/scanner.ts';
+import { summariseCycle } from './jobs/scan-cycle.ts';
+import { TelegramChannel } from './alerts/telegram.ts';
+import { loadConfig } from './config/index.ts';
+import { exportState, importState, readSnapshot, writeSnapshot } from './state/snapshot.ts';
 import { runReplay } from './jobs/replay.ts';
 import { labelCandidates } from './validation/labeller.ts';
 import { buildReport } from './validation/metrics.ts';
@@ -242,6 +249,77 @@ const COMMANDS: Record<string, () => void | Promise<void>> = {
     } finally {
       db.close();
     }
+  },
+
+  'scan:once': async () => {
+    const db = openDb({ path: dbPath() });
+    try {
+      migrate(db);
+      const config = loadConfig();
+      const args = process.argv.slice(3);
+      const symbolArgs = args.filter((a) => !a.startsWith('--'));
+
+      const opts: Parameters<typeof scanOnce>[1] = {
+        trigger: args.includes('--manual') ? 'MANUAL' : 'SCHEDULE',
+      };
+      if (symbolArgs.length > 0) opts.symbols = symbolArgs;
+      if (args.includes('--force')) opts.force = true;
+
+      // Ephemeral runners restore alert state so the same signal is not
+      // re-announced every five minutes. See src/state/snapshot.ts.
+      const statePath = join(DATA_DIR, 'state.json');
+      if (args.includes('--restore-state')) {
+        const restored = importState(db, readSnapshot(statePath));
+        if (restored.warning) console.log(`state: ${restored.warning}`);
+        else {
+          console.log(
+            `state: restored ${restored.signalsRestored} signal(s), ` +
+              `${restored.alertsRestored} recent alert(s)`,
+          );
+        }
+      }
+
+      const outcome = await scanOnce(
+        { db, config, channels: [new TelegramChannel()] },
+        opts,
+      );
+      console.log(summariseCycle(outcome));
+
+      if (args.includes('--save-state')) {
+        writeSnapshot(statePath, exportState(db));
+        console.log(`state: saved to ${statePath}`);
+      }
+
+      for (const c of outcome.result?.paperBuyCandidates ?? []) {
+        console.log(`  PAPER_BUY ${c.symbol} swing10=${c.swing10Score} event=${c.eventQualityScore}`);
+      }
+      for (const t of outcome.transitions.filter((x) => x.notable)) {
+        console.log(`  transition ${t.symbol}: ${t.kind} — ${t.reason}`);
+      }
+    } finally {
+      db.close();
+    }
+  },
+
+  'scanner:start': async () => {
+    const db = openDb({ path: dbPath() });
+    migrate(db);
+    const config = loadConfig();
+
+    const handle = startScanner(
+      { db, config, channels: [new TelegramChannel()] },
+      config,
+    );
+
+    const shutdown = (signal: string): void => {
+      console.log(`\nreceived ${signal}, finishing the current cycle...`);
+      handle.stop();
+    };
+    process.on('SIGINT', () => shutdown('SIGINT'));
+    process.on('SIGTERM', () => shutdown('SIGTERM'));
+
+    await handle.done;
+    db.close();
   },
 
   'feed:smoke': async () => {

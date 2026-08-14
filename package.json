@@ -18,7 +18,9 @@
     "scan": "node --experimental-strip-types --no-warnings=ExperimentalWarning src/cli.ts scan",
     "replay": "node --experimental-strip-types --no-warnings=ExperimentalWarning src/cli.ts replay",
     "label": "node --experimental-strip-types --no-warnings=ExperimentalWarning src/cli.ts label",
-    "validate": "node --experimental-strip-types --no-warnings=ExperimentalWarning src/cli.ts validate"
+    "validate": "node --experimental-strip-types --no-warnings=ExperimentalWarning src/cli.ts validate",
+    "scan:once": "node --experimental-strip-types --no-warnings=ExperimentalWarning src/cli.ts scan:once",
+    "scanner:start": "node --experimental-strip-types --no-warnings=ExperimentalWarning src/cli.ts scanner:start"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

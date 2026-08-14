@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "exportedAt": "2026-08-14T09:54:50.588Z",
+  "processedEventKeys": [
+    "manual_csv:TESTCO:2026-08-13T11:03:00.000Z:Q1 results: revenue up 16 percent PAT up 48 percent"
+  ],
+  "signals": [
+    {
+      "symbol": "TESTCO",
+      "action": "IGNORE",
+      "swing10Score": 0,
+      "eventQuality": 35,
+      "tradeQuality": 0,
+      "firstSeenAt": "2026-08-14T09:54:43.639Z",
+      "updatedAt": "2026-08-14T09:54:50.575Z",
+      "invalidationReason": null
+    }
+  ],
+  "recentAlerts": []
+}

@@ -1,0 +1,105 @@
+name: SCAN NEWS AND MARKET
+
+# ─────────────────────────────────────────────────────────────────────────────
+# BACKUP MODE, NOT REAL-TIME MONITORING.
+#
+# GitHub's scheduled workflows are best-effort and frequently run late — under
+# load, delays of 10-30 minutes are normal, and a scheduled run can be dropped
+# entirely. This workflow therefore makes no claim to minute-level monitoring.
+# For that, run `npm run scanner:start` locally.
+#
+# Cron here is UTC. It is deliberately generous, and the APPLICATION decides
+# whether the Indian market is actually open, using Asia/Kolkata and the
+# configured holiday list. Cron only decides how often to ask the question.
+#
+# 03:45-10:15 UTC covers 09:15-15:45 IST with margin at both ends.
+# ─────────────────────────────────────────────────────────────────────────────
+
+on:
+  schedule:
+    - cron: '*/5 3-10 * * 1-5'
+  workflow_dispatch:
+    inputs:
+      force:
+        description: 'Scan even if the market is closed'
+        type: boolean
+        default: false
+      symbols:
+        description: 'Optional space-separated symbols to scan'
+        type: string
+        default: ''
+
+# One scan at a time. A queued run is dropped rather than piling up behind a
+# slow one — a stale scan is worth less than the next fresh one.
+concurrency:
+  group: market-scan
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      # ── State restore ──────────────────────────────────────────────────
+      # Rolling cache keys: each run writes a new key and restores the most
+      # recent prefix match. See src/state/snapshot.ts for why this is
+      # best-effort and why losing it is cheap.
+      - name: Restore scanner state
+        uses: actions/cache/restore@v4
+        with:
+          path: data/state.json
+          key: swing10-state-${{ github.run_id }}
+          restore-keys: |
+            swing10-state-
+
+      - name: Run one scan cycle
+        id: scan
+        env:
+          UPSTOX_ANALYTICS_TOKEN: ${{ secrets.UPSTOX_ANALYTICS_TOKEN }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          ALERTS_ENABLED: ${{ secrets.TELEGRAM_BOT_TOKEN != '' && 'true' || 'false' }}
+        run: |
+          set -euo pipefail
+          ARGS=""
+          if [ "${{ inputs.force }}" = "true" ]; then ARGS="$ARGS --force --manual"; fi
+          if [ -n "${{ inputs.symbols }}" ]; then ARGS="$ARGS ${{ inputs.symbols }}"; fi
+          npm run scan:once -- --restore-state --save-state $ARGS | tee scan-output.txt
+
+      # Saved unconditionally so a failed scan still preserves prior state.
+      - name: Save scanner state
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: data/state.json
+          key: swing10-state-${{ github.run_id }}
+
+      - name: Publish scan summary
+        if: always()
+        run: |
+          {
+            echo '## SCAN NEWS AND MARKET'
+            echo ''
+            echo '```'
+            cat scan-output.txt 2>/dev/null || echo 'no output captured'
+            echo '```'
+            echo ''
+            echo '_Paper trading only. Strategy not validated._'
+            echo ''
+            echo '> GitHub Actions runs are best-effort and may be delayed or'
+            echo '> dropped. Local mode is the authoritative full-history mode.'
+          } >> "$GITHUB_STEP_SUMMARY"
