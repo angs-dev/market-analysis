@@ -6,7 +6,13 @@
  * enforced centrally by the governor.
  */
 
-export type LatencyClass = 'REALTIME' | 'DELAYED' | 'PERIODIC' | 'UNKNOWN';
+export type LatencyClass =
+  | 'REALTIME'
+  /** Sub-minute but not pushed — a fast poll, honestly labelled. */
+  | 'NEAR_REALTIME'
+  | 'DELAYED'
+  | 'PERIODIC'
+  | 'UNKNOWN';
 
 export type Fidelity = 'HIGH' | 'MEDIUM' | 'LOW' | 'UNAVAILABLE';
 
